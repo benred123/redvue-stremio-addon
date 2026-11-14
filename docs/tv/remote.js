@@ -226,7 +226,13 @@
   }
 
   function currentDialog() {
-    return one(".overlay:not(.hidden)");
+    // Always target the topmost popup. If another overlay is temporarily
+    // open during the transition, never send keys to the search behind it.
+    const details = one("#details-overlay");
+    if (details && !details.classList.contains("hidden")) return details;
+    const search = one("#search-overlay");
+    if (search && !search.classList.contains("hidden")) return search;
+    return null;
   }
 
   function searchKey(name) {
