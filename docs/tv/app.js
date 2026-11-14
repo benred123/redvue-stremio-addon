@@ -143,6 +143,14 @@
     const art=safeArt(item.background);
     if(art) qs('#hero-art').style.backgroundImage='url(' + JSON.stringify(art) + ')';
     qs('#hero-detail').textContent='Explore ' + item.name;
+    // Some catalog previews omit landscape images. Load the detailed backdrop.
+    json(BASE+'/meta/'+item.type+'/'+encodeURIComponent(item.id)+'.json').then(data=>{
+      if(!selectedItem || selectedItem.id!==item.id)return;
+      const meta=data.meta||{};
+      const backdrop=safeArt(meta.background||meta.poster);
+      if(backdrop)qs('#hero-art').style.backgroundImage='url('+JSON.stringify(backdrop)+')';
+      if(meta.description)qs('#hero-description').textContent=meta.description;
+    }).catch(()=>{});
   }
   async function showDetails(item) {
     focusBeforeModal=doc.activeElement;
@@ -198,7 +206,19 @@
     if(doc.querySelector('.overlay:not(.hidden)'))return;
     if(!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(key))return;
     const active=doc.activeElement;
-    if(!active.classList.contains('tile')||!active.closest('.shelf'))return;
+    if(!active.classList.contains('tile')||!active.closest('.shelf')){
+      // A TV remote can enter the rails directly from the top navigation or hero.
+      if(key==='ArrowDown'){
+        const first=shelves.find(row=>!row.el.classList.contains('hidden-by-filter'));
+        if(first){
+          event.preventDefault();
+          load(first);
+          const focusFirst=()=>{const tile=first.rail.querySelector('.tile');if(tile){tile.focus();tile.scrollIntoView({block:'center',inline:'nearest',behavior:'smooth'});}};
+          if(first.rendered)focusFirst();else setTimeout(focusFirst,600);
+        }
+      }
+      return;
+    }
     const section=active.closest('.shelf'),current=shelves[Number(section.dataset.row)];
     const cards=[...current.rail.querySelectorAll('.tile')],position=cards.indexOf(active);
     if(position<0)return;
