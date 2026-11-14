@@ -7,12 +7,12 @@
   <meta name="description" content="REDVUE TV — a cinematic way to discover movies and series and open them in Stremio.">
   <link rel="manifest" href="./site.webmanifest">
   <link rel="icon" href="../assets/redvue-mark.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./styles.css?v=tv-0.2">
+  <link rel="stylesheet" href="./styles.css?v=tv-0.3">
   <title>REDVUE — Everything worth watching</title>
 </head>
 <body>
   <header class="header">
-    <a href="./" class="brand" aria-label="REDVUE Home"><span>RED</span>VUE</a>
+    <a href="./" class="brand" aria-label="REDVUE Home"><img class="brand-glyph" src="../assets/redvue-glyph.svg" alt="" aria-hidden="true"><span class="brand-word"><span>RED</span>VUE</span></a>
     <nav class="nav" aria-label="Browse">
       <button class="nav-btn active" data-filter="all">Home</button>
       <button class="nav-btn" data-filter="series">Series</button>
@@ -60,12 +60,12 @@
         <div id="detail-facts" class="detail-facts"></div>
         <p id="detail-description"></p>
         <a id="detail-launch" class="primary launch" href="#" role="button">▶ Open in Stremio</a>
-        <p class="muted small">Opening the installed Stremio app depends on your TV browser. If it does not open, use the same title in Stremio directly.</p>
+        <p class="muted small return-hint">On Fire TV, Stremio controls its own Back button. If Back returns to Fire TV Home, reopen REDVUE from Apps; your last browsing row should be restored.</p>
       </div>
     </div>
   </div>
   <script src="./config.js"></script>
-  <script src="./app.js?v=tv-0.2" defer></script>
-  <script src="./remote.js?v=tv-0.2" defer></script>
+  <script src="./app.js?v=tv-0.3" defer></script>
+  <script src="./remote.js?v=tv-0.3" defer></script>
 </body>
 </html>
