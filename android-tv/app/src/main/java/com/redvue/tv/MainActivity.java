@@ -23,7 +23,7 @@ import android.widget.Toast;
  * interface. No TMDB credentials are stored inside this APK.
  */
 public final class MainActivity extends Activity {
-    private static final String HOME = "https://benred123.github.io/redvue-stremio-addon/tv/?tv=1";
+    private static final String HOME = "https://benred123.github.io/redvue-stremio-addon/tv/?tv=1&app=0.3.0";
     private static final String TRUSTED_HOST = "benred123.github.io";
     private static final String TRUSTED_PATH = "/redvue-stremio-addon/tv/";
     private WebView webView;
