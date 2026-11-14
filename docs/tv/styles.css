@@ -2,18 +2,36 @@
 /* TMDB credits and metadata launch states */
 .footer-credit{display:flex;flex-direction:column;gap:8px}.footer-credit #provider-credit{display:flex;gap:12px;align-items:center}.footer-credit #provider-credit[hidden]{display:none}.tmdb-logo{width:52px;height:36px;object-fit:contain}.launch.unavailable{opacity:.55;pointer-events:none;cursor:default}
 
-/* Fire TV app: large, unambiguous D-pad focus rings. */
+/* Fire TV v0.2: slightly smaller posters and more rows per screen. */
+body.tv-mode .tile,
+body.tv-mode .skeleton {
+  flex: 0 0 clamp(118px, 11.5vw, 180px);
+}
+body.tv-mode .rail {
+  gap: 10px;
+  padding-top: 10px;
+  padding-bottom: 18px;
+  scroll-padding-inline: 4vw;
+}
+body.tv-mode .shelf {
+  margin-bottom: 22px;
+}
+body.tv-mode .shelf-head {
+  margin-bottom: 8px;
+}
 body.tv-mode .tile:focus-visible {
   outline: 4px solid #e50914;
-  outline-offset: 5px;
-  transform: scale(1.07);
-  box-shadow: 0 18px 42px rgba(0,0,0,.85);
+  outline-offset: 4px;
+  transform: scale(1.035);
+  box-shadow: 0 10px 25px rgba(0,0,0,.7);
 }
 body.tv-mode button:focus-visible,
 body.tv-mode a:focus-visible,
 body.tv-mode input:focus-visible {
   outline: 3px solid #e50914;
-  outline-offset: 5px;
+  outline-offset: 4px;
 }
-body.tv-mode .rail { scroll-padding-inline: 5vw; }
-body.tv-mode .hero { min-height: 540px; }
+body.tv-mode .hero {
+  min-height: 500px;
+}
+
