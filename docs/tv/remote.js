@@ -132,7 +132,7 @@
 
   function firstRow() {
     const row = rows()[0];
-    if (row) openRow(row, window.innerWidth * 0.17);
+    if (row) openRow(row, window.innerWidth * 0.09);
   }
 
   function currentDialog() {
