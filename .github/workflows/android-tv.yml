@@ -32,12 +32,40 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
+      - name: Record Android build environment
+        run: |
+          {
+            echo "Java:"
+            java -version 2>&1
+            echo "Gradle:"
+            gradle --version
+            echo "Android SDK path: ${ANDROID_HOME:-unset}"
+            echo "Project files:"
+            ls -la android-tv/
+            echo "Gradle project:"
+            ls -la android-tv/app/
+          } > android-build-environment.txt 2>&1
+          cat android-build-environment.txt
       - name: Compile REDVUE debug APK
-        run: gradle -p android-tv --no-daemon :app:assembleDebug
+        shell: bash
+        run: |
+          set -o pipefail
+          gradle -p android-tv --no-daemon --stacktrace --warning-mode all :app:assembleDebug 2>&1 | tee android-build.log
       - name: Upload REDVUE APK
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: REDVUE-FireTV-debug-APK
           path: android-tv/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 30
+      - name: Upload REDVUE build diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: REDVUE-Android-build-diagnostics
+          path: |
+            android-build.log
+            android-build-environment.txt
+          if-no-files-found: warn
+          retention-days: 14
