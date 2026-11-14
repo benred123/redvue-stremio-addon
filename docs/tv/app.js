@@ -60,6 +60,9 @@
   const qs = (selector) => document.querySelector(selector);
   const doc = document;
   let focusBeforeModal = null;
+  let focusBeforeSearch = null;
+  let searchFocusBeforeDetails = null;
+  let detailsFromSearch = false;
   let selectedItem = null;
   let searchToken = 0;
   let timer = null;
@@ -208,6 +211,15 @@
   }
   async function showDetails(item) {
     focusBeforeModal=doc.activeElement;
+    const search=qs('#search-overlay');
+    detailsFromSearch=!search.classList.contains('hidden');
+    searchFocusBeforeDetails=detailsFromSearch ? doc.activeElement : null;
+    // The details popup must be the ONLY active overlay. Otherwise the TV
+    // controller can keep routing D-pad keys to search results behind it.
+    if(detailsFromSearch){
+      search.classList.add('hidden');
+      search.setAttribute('aria-hidden','true');
+    }
     const overlay=qs('#details-overlay');
     overlay.classList.remove('hidden');overlay.setAttribute('aria-hidden','false');
     qs('#detail-title').textContent=item.name;
@@ -255,11 +267,32 @@
     }
   }
   function closeOverlays(){
-    doc.querySelectorAll('.overlay').forEach(el=>{el.classList.add('hidden');el.setAttribute('aria-hidden','true');});
-    if(focusBeforeModal && focusBeforeModal.isConnected)focusBeforeModal.focus();
+    const details=qs('#details-overlay'),search=qs('#search-overlay');
+    const detailsWasOpen=!details.classList.contains('hidden');
+    details.classList.add('hidden');details.setAttribute('aria-hidden','true');
+    if(detailsWasOpen && detailsFromSearch){
+      // Back from details restores the SAME search results and selected title.
+      // The underlying search dialog was hidden while details was active.
+      detailsFromSearch=false;
+      search.classList.remove('hidden');search.setAttribute('aria-hidden','false');
+      const returnTo=searchFocusBeforeDetails;
+      searchFocusBeforeDetails=null;
+      if(returnTo && returnTo.isConnected) returnTo.focus({preventScroll:true});
+      else qs('#search-input').focus({preventScroll:true});
+      return;
+    }
+    search.classList.add('hidden');search.setAttribute('aria-hidden','true');
+    detailsFromSearch=false;
+    searchFocusBeforeDetails=null;
+    const returnTo=focusBeforeSearch || focusBeforeModal;
+    focusBeforeSearch=null;
+    if(returnTo && returnTo.isConnected) returnTo.focus({preventScroll:true});
   }
   function showSearch(){
+    focusBeforeSearch=doc.activeElement;
     focusBeforeModal=doc.activeElement;
+    detailsFromSearch=false;
+    searchFocusBeforeDetails=null;
     qs('#search-overlay').classList.remove('hidden');qs('#search-overlay').setAttribute('aria-hidden','false');
     qs('#search-input').focus();
   }
