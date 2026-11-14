@@ -1,0 +1,24 @@
+# REDVUE / ErsatzTV Legacy - Beelink Linux Docker setup
+# Use this on the Beelink AFTER Ubuntu Server and Docker are installed.
+# Run from /srv/redvue using: docker compose up -d
+#
+# IMPORTANT: This is for Linux, not Docker Desktop for Windows.
+services:
+  ersatztv:
+    image: ghcr.io/ersatztv/legacy:latest
+    container_name: redvue-ersatztv
+    restart: unless-stopped
+    environment:
+      TZ: Europe/London
+    ports:
+      - "8409:8409"
+    volumes:
+      - ./config:/config
+      - ./media:/media:ro
+    # Enable AFTER checking that the Intel GPU appears as /dev/dri on
+    # Ubuntu, and confirming QSV/VAAPI settings in ErsatzTV.
+    # devices:
+    #   - /dev/dri:/dev/dri
+    # Optional: use RAM for temporary transcoding to reduce SSD writes.
+    # tmpfs:
+    #   - /transcode
