@@ -5,7 +5,22 @@
 This repository contains two distinct projects:
 
 - **Stremio catalog add-on** (`docs/manifest.json`): five hand-picked collections, with Stremio-controlled interface.
-- **REDVUE TV browser** (`docs/tv/`): independently designed Netflix-style homepage, with 18 horizontally scrollable rows, live catalog discovery, search, details, keyboard/TV-remote arrow navigation, and a Stremio deep-link handoff.
+- **REDVUE TV browser** (`docs/tv/`): independently designed Netflix-style homepage, with 30 horizontally scrollable TMDB rows when configured (18 fallback Cinemeta rows), live catalog discovery, search, details, keyboard/TV-remote arrow navigation, and a Stremio deep-link handoff.
+
+## TMDB-powered catalog (new)
+
+The TV homepage now supports **30 live TMDB shelves**, cinematic backdrops, full-text movie/TV search, paginated browsing and IMDb-ID resolution for Stremio handoff. Cinemeta remains the fallback until the secure TMDB gateway is configured.
+
+**Setup**
+
+1. Register at https://www.themoviedb.org and request the **API Read Access Token** under account settings > API. Do not share the token in chat, GitHub or browser code.
+2. Create a Cloudflare Worker at https://dash.cloudflare.com > Workers & Pages > Create application > Create Worker. Replace its default JavaScript with `worker/tmdb-worker.js` from this repo and deploy.
+3. In the Worker's **Settings > Variables and Secrets**, add a variable named `TMDB_READ_TOKEN`, choose **Secret**, and paste your TMDB **API Read Access Token** as its value. Deploy the changes.
+4. Test `https://YOUR-WORKER.workers.dev/health` (should show `"configured":true`) and `https://YOUR-WORKER.workers.dev/catalog/trending-movies?page=1` (should show results).
+5. Edit `docs/tv/config.js`: replace the empty string in `window.REDVUE_TMDB_API = "";` with your **public Worker URL only**, e.g. `https://redvue-tmdb.example.workers.dev`. Commit to `main` (GitHub Pages will publish the change).
+6. Reload https://benred123.github.io/redvue-stremio-addon/tv/. The footer will say **Live catalogue: TMDB**.
+
+The public Worker URL is safe to commit; the API token never goes into GitHub Pages. Public Workers can still consume TMDB request quotas, so this prototype is for private/non-commercial development. TMDB attribution is shown in the TV app's footer, according to TMDB's API rules.
 
 ## Try the new TV interface
 

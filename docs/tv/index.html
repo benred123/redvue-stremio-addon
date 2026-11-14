@@ -37,7 +37,9 @@
     <section id="shelves" aria-label="Movie and series collections"></section>
     <footer class="footer">
       <span class="brand-foot">REDVUE</span>
-      <span>Movie discovery powered by Stremio's Cinemeta catalog. Playback opens in Stremio. REDVUE doesn't host streams.</span>
+      <div class="footer-credit"><span id="source-status">Catalogue: Cinemeta (TMDB not connected yet)</span><span>Playback opens in Stremio. REDVUE doesn't host streams.</span>
+        <span id="provider-credit" hidden><a href="https://www.themoviedb.org" target="_blank" rel="noopener noreferrer"><img class="tmdb-logo" src="https://www.themoviedb.org/assets/2/v4/logos/v2/blue_square_2-d537fb228cf3ded904ef09b136fe3fec72548ebc1fea3fbbd1ad9e36364db38b.svg" alt="TMDB official logo"></a>
+        This product uses the TMDB API but is not endorsed or certified by TMDB.</span></div>
     </footer>
   </main>
   <div id="search-overlay" class="overlay hidden" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Search">
@@ -62,6 +64,7 @@
       </div>
     </div>
   </div>
+  <script src="./config.js"></script>
   <script src="./app.js" defer></script>
 </body>
 </html>
