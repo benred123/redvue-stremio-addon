@@ -86,12 +86,19 @@ async function upstream(endpoint, params, token) {
   url.searchParams.set("language", "en-GB");
   url.searchParams.set("include_adult", "false");
   for (const [key, value] of Object.entries(params)) url.searchParams.set(key, String(value));
+  // Support TMDB API Read Access Tokens and v3 API Keys.
+  // Both credentials remain private inside Cloudflare.
+  const credential = String(token || "").trim().replace(/^Bearer\s+/i, "");
+  const usingV3Key = /^[a-f0-9]{32}$/i.test(credential);
+  if (usingV3Key) url.searchParams.set("api_key", credential);
+  const requestHeaders = { Accept: "application/json" };
+  if (!usingV3Key) requestHeaders.Authorization = "Bearer " + credential;
   const res = await fetch(url.href, {
-    headers: { Authorization: "Bearer " + token, Accept: "application/json" },
+    headers: requestHeaders,
     signal: AbortSignal.timeout(10000),
     cf: { cacheTtl: 1800, cacheEverything: true }
   });
-  if (!res.ok) throw new Error("TMDB returned " + res.status);
+  if (!res.ok) throw new Error("TMDB_HTTP_" + res.status);
   return await res.json();
 }
 async function catalog(slug, url, token) {
@@ -170,8 +177,20 @@ export default {
         return await details(parts[1], parts[2], env.TMDB_READ_TOKEN);
       return reply({ error: "Route not found" }, 404, 0);
     } catch (err) {
-      console.error("REDVUE TMDB gateway:", String(err));
-      return reply({ error: "Metadata provider unavailable; try again shortly" }, 502, 0);
+      const message = String(err && err.message || err);
+      const match = /^TMDB_HTTP_(\d{3})$/.exec(message);
+      if (match) {
+        const upstreamStatus = Number(match[1]);
+        const hint = (upstreamStatus === 401 || upstreamStatus === 403)
+          ? "TMDB rejected the credential. In Cloudflare, check TMDB_READ_TOKEN: use a valid API Read Access Token or v3 API Key, without extra quotes."
+          : upstreamStatus === 429
+          ? "TMDB has rate-limited requests. Retry later."
+          : "TMDB returned an error. Check Cloudflare Worker logs.";
+        console.error("REDVUE TMDB upstream status:", upstreamStatus);
+        return reply({ error: hint, upstream_status: upstreamStatus }, 502, 0);
+      }
+      console.error("REDVUE TMDB gateway error:", message);
+      return reply({ error: "Cloudflare could not complete the TMDB request. Check Worker logs." }, 502, 0);
     }
   }
 };
