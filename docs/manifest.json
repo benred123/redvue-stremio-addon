@@ -1,0 +1,41 @@
+{
+  "id": "com.redvue.curated-catalogs",
+  "version": "1.0.0",
+  "name": "REDVUE",
+  "description": "Premium curated movie and series collections for Stremio. Catalogs only; no streams provided.",
+  "logo": "https://benred123.github.io/redvue-stremio-addon/assets/redvue-mark.png",
+  "resources": [
+    "catalog"
+  ],
+  "types": [
+    "movie",
+    "series"
+  ],
+  "catalogs": [
+    {
+      "id": "movie-night",
+      "type": "movie",
+      "name": "REDVUE | Movie Night"
+    },
+    {
+      "id": "mind-bending-sci-fi",
+      "type": "movie",
+      "name": "REDVUE | Mind-Bending Sci-Fi"
+    },
+    {
+      "id": "crime-thrillers",
+      "type": "movie",
+      "name": "REDVUE | Crime & Thrillers"
+    },
+    {
+      "id": "binge-worthy-series",
+      "type": "series",
+      "name": "REDVUE | Binge-Worthy Series"
+    },
+    {
+      "id": "dark-tv",
+      "type": "series",
+      "name": "REDVUE | Dark & Intense TV"
+    }
+  ]
+}

@@ -1,0 +1,64 @@
+{
+  "metas": [
+    {
+      "id": "tt4158110",
+      "type": "series",
+      "name": "Mr. Robot",
+      "poster": "https://images.metahub.space/poster/medium/tt4158110/img"
+    },
+    {
+      "id": "tt2356777",
+      "type": "series",
+      "name": "True Detective",
+      "poster": "https://images.metahub.space/poster/medium/tt2356777/img"
+    },
+    {
+      "id": "tt5753856",
+      "type": "series",
+      "name": "Dark",
+      "poster": "https://images.metahub.space/poster/medium/tt5753856/img"
+    },
+    {
+      "id": "tt7366338",
+      "type": "series",
+      "name": "Chernobyl",
+      "poster": "https://images.metahub.space/poster/medium/tt7366338/img"
+    },
+    {
+      "id": "tt2707408",
+      "type": "series",
+      "name": "Narcos",
+      "poster": "https://images.metahub.space/poster/medium/tt2707408/img"
+    },
+    {
+      "id": "tt1190634",
+      "type": "series",
+      "name": "The Boys",
+      "poster": "https://images.metahub.space/poster/medium/tt1190634/img"
+    },
+    {
+      "id": "tt11126994",
+      "type": "series",
+      "name": "Arcane",
+      "poster": "https://images.metahub.space/poster/medium/tt11126994/img"
+    },
+    {
+      "id": "tt5180504",
+      "type": "series",
+      "name": "The Witcher",
+      "poster": "https://images.metahub.space/poster/medium/tt5180504/img"
+    },
+    {
+      "id": "tt2243973",
+      "type": "series",
+      "name": "Hannibal",
+      "poster": "https://images.metahub.space/poster/medium/tt2243973/img"
+    },
+    {
+      "id": "tt0475784",
+      "type": "series",
+      "name": "Westworld",
+      "poster": "https://images.metahub.space/poster/medium/tt0475784/img"
+    }
+  ]
+}
