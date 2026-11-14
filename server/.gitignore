@@ -1,0 +1,9 @@
+# Personal media, third-party videos and live server data are private.
+media/
+config/
+*.mkv
+*.mp4
+*.avi
+*.mov
+*.ts
+*.m3u8
