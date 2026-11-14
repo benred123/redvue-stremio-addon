@@ -354,6 +354,14 @@
     qs('#hero-detail').addEventListener('click',()=>selectedItem?showDetails(selectedItem):qs('#shelves').scrollIntoView());
     qs('#hero-explore').addEventListener('click',()=>{qs('#shelves').scrollIntoView({behavior:'smooth'});setTimeout(()=>{const first=qs('.shelf .tile');if(first)first.focus();},400);});
     qs('#search-open').addEventListener('click',showSearch);
+    // Keep the selected shelf when leaving REDVUE for Stremio.
+    qs('#detail-launch').addEventListener('click', () => {
+      const destination = qs('#detail-launch').getAttribute('href') || '';
+      if (destination.startsWith('stremio:') &&
+          window.REDVUE_TV_REMOTE?.saveReturnPoint) {
+        window.REDVUE_TV_REMOTE.saveReturnPoint();
+      }
+    });
     doc.querySelectorAll('[data-close]').forEach(btn=>btn.addEventListener('click',closeOverlays));
     doc.querySelectorAll('.overlay').forEach(el=>el.addEventListener('click',e=>{if(e.target===el)closeOverlays();}));
     qs('#search-input').addEventListener('input',e=>{clearTimeout(timer);timer=setTimeout(()=>runSearch(e.target.value),350);});
