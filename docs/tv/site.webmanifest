@@ -8,9 +8,9 @@
   "theme_color": "#e50914",
   "icons": [
     {
-      "src": "../assets/redvue-mark.png",
-      "sizes": "512x512",
-      "type": "image/png",
+      "src": "../assets/redvue-mark.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
       "purpose": "any maskable"
     }
   ]
