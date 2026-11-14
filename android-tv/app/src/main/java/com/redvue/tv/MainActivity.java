@@ -148,13 +148,34 @@ public final class MainActivity extends Activity {
     protected void onResume() {
         super.onResume();
         enterImmersiveMode();
-        if (webView != null) webView.onResume();
+        if (webView != null) {
+            webView.onResume();
+            // Restore focus and close the old details card when users come
+            // back from Stremio, Fire TV Home or Recent Apps.
+            webView.evaluateJavascript(
+                "window.REDVUE_TV_REMOTE && window.REDVUE_TV_REMOTE.resume()", null);
+        }
     }
 
     @Override
     protected void onPause() {
-        if (webView != null) webView.onPause();
+        if (webView != null) {
+            // Persist the highlighted poster before Android backgrounds us.
+            webView.evaluateJavascript(
+                "window.REDVUE_TV_REMOTE && window.REDVUE_TV_REMOTE.suspend()", null);
+            webView.onPause();
+        }
         super.onPause();
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        if (webView != null) {
+            webView.evaluateJavascript(
+                "window.REDVUE_TV_REMOTE && window.REDVUE_TV_REMOTE.resume()", null);
+        }
     }
 
     @Override
