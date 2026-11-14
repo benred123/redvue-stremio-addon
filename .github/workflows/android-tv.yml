@@ -46,6 +46,14 @@ jobs:
             ls -la android-tv/app/
           } > android-build-environment.txt 2>&1
           cat android-build-environment.txt
+      # Debug builds were previously signed with a fresh key every run,
+      # which prevents adb install -r from upgrading the previous APK.
+      # Cache this test-only debug keystore for consistent beta updates.
+      - name: Cache REDVUE debug signing key
+        uses: actions/cache@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: redvue-firetv-debug-keystore-v1
       - name: Compile REDVUE debug APK
         shell: bash
         run: |
