@@ -340,6 +340,14 @@
     if(status)status.textContent=USING_TMDB?'Live catalogue: TMDB':'Catalogue: Cinemeta (TMDB not connected yet)';
     const area=qs('#shelves');
     shelves.forEach((row,i)=>area.append(makeShelf(row,i)));
+    // Expose only the safe lazy-loader to the Android TV remote controller.
+    // It needs to request a row even when the row is outside the viewport.
+    window.REDVUE_TV_DATA = {
+      loadRow(index) {
+        const row = shelves[index];
+        if (row) load(row);
+      }
+    };
     const watcher='IntersectionObserver' in window ? new IntersectionObserver(entries=>entries.forEach(entry=>{if(entry.isIntersecting){const row=shelves[Number(entry.target.dataset.row)];load(row);}}),{rootMargin:'650px 0px'}) : null;
     shelves.forEach((row,i)=>{if(i<3)load(row);if(watcher)watcher.observe(row.el);else load(row);});
     doc.querySelectorAll('.nav-btn').forEach(btn=>btn.addEventListener('click',()=>applyFilter(btn.dataset.filter)));
