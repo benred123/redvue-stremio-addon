@@ -7,6 +7,31 @@ This repository contains two distinct projects:
 - **Stremio catalog add-on** (`docs/manifest.json`): five hand-picked collections, with Stremio-controlled interface.
 - **REDVUE TV browser** (`docs/tv/`): independently designed Netflix-style homepage, with 30 horizontally scrollable TMDB rows when configured (18 fallback Cinemeta rows), live catalog discovery, search, details, keyboard/TV-remote arrow navigation, and a Stremio deep-link handoff.
 
+## REDVUE TV v0.3 beta — polish update
+
+- Redesigned red RV monogram in the TV header, favicon and Android launcher.
+- Short eased vertical scrolling; neighboring catalog rows prefetch in advance.
+- Smaller details card optimised for a television, with the play button on screen.
+- Save the highlighted poster before opening Stremio, and restore browsing focus
+  when REDVUE is resumed or relaunched. The native activity retains its task.
+- New debug APK version `0.3.0-beta` (versionCode 3).
+- Debug-signing-key caching is enabled for subsequent automated builds.
+
+**Important limitation:** Stremio is a separate application and handles its
+own Back button and task. REDVUE cannot reliably intercept Back while Stremio
+is in the foreground. If Back goes to Fire TV Home, open REDVUE from the Apps
+screen: REDVUE will attempt to restore the last selected shelf/poster.
+
+**Updating:** Website-only changes arrive after reopening REDVUE and refreshing
+the GitHub Pages content. The updated launcher icon and Android resume handling
+require installing the new APK from the latest green GitHub Actions run.
+
+`adb install -r app-debug.apk` usually upgrades in place. If it fails with
+`INSTALL_FAILED_UPDATE_INCOMPATIBLE`, the previous debug APK was signed by
+a different generated key. In that case, uninstall **only REDVUE** with
+`adb uninstall com.redvue.tv` and install the new APK. The debug signing key is
+now cached for later beta builds, reducing future signature conflicts.
+
 ## REDVUE for Fire TV — APK beta
 
 A Fire TV / Android TV launcher app is included in `android-tv/`. This **beta**
