@@ -1,128 +1,295 @@
 /**
- * REDVUE TV remote controller.
- * Loaded only when the app URL includes ?tv=1; harmless in a desktop browser.
- * The Android activity sends directional keys here instead of relying on
- * Amazon Silk's cursor navigation.
+ * REDVUE Android TV remote navigation v0.2
+ *
+ * No artificial 500ms row-switch delays:
+ * - Up/Down follow visible shelves even while their TMDB catalog is loading.
+ * - Current on-screen poster column is kept when changing shelves.
+ * - Vertical scrolling only occurs when a shelf is partly out of view.
+ * - Left/Right retain the existing catalog navigator and pagination.
+ *
+ * No effect on normal desktop browsing (the APK loads the page with ?tv=1).
  */
 (function () {
   "use strict";
   if (!new URLSearchParams(location.search).has("tv")) return;
 
-  const one = (selector) => document.querySelector(selector);
-  const shown = (element) => Boolean(element && element.isConnected &&
+  const one = selector => document.querySelector(selector);
+  const tiles = parent => Array.from(parent.querySelectorAll(".tile"));
+  const rows = () => Array.from(document.querySelectorAll(".shelf:not(.hidden-by-filter)"));
+  const isVisible = element => Boolean(element && element.isConnected &&
     element.getClientRects().length && !element.closest(".hidden"));
-  const focus = (element) => {
-    if (!shown(element)) return false;
+  const focusOnly = element => {
+    if (!isVisible(element)) return false;
     element.focus({ preventScroll: true });
-    element.scrollIntoView({ behavior: "smooth", block: "center", inline: "center" });
     return true;
   };
-  const visibleRows = () => Array.from(document.querySelectorAll(".shelf:not(.hidden-by-filter)"));
-  const cards = (parent) => Array.from(parent.querySelectorAll(".tile"));
+  const centerX = element => {
+    const rect = element.getBoundingClientRect();
+    return rect.left + rect.width / 2;
+  };
 
-  // Catalog pages load asynchronously. Wait for the first actual poster
-  // instead of focusing the skeleton placeholders.
-  function focusFirstRow() {
-    const row = visibleRows()[0];
-    if (!row) return;
-    const first = cards(row)[0];
-    if (first) { focus(first); return; }
+  let desiredX = window.innerWidth * 0.25;
+  let observer = null;
+  let timeout = 0;
+  let navigationId = 0;
+
+  function cancelPending() {
+    navigationId += 1;
+    if (observer) observer.disconnect();
+    observer = null;
+    if (timeout) clearTimeout(timeout);
+    timeout = 0;
+  }
+
+  function showRow(row) {
+    const rect = row.getBoundingClientRect();
+    const topLimit = Math.max(104, window.innerHeight * 0.11);
+    const bottomLimit = window.innerHeight - 30;
+    // Keep the title and posters visible without recentering every shelf.
+    let adjustment = 0;
+    if (rect.top < topLimit) adjustment = rect.top - topLimit;
+    else if (rect.bottom > bottomLimit) adjustment = rect.bottom - bottomLimit;
+    if (Math.abs(adjustment) > 3) {
+      window.scrollTo({ top: Math.max(0, window.scrollY + adjustment), behavior: "auto" });
+    }
+  }
+
+  function revealHorizontally(tile) {
+    const rail = tile.closest(".rail");
+    if (!rail) return;
+    const bounds = rail.getBoundingClientRect();
+    const rect = tile.getBoundingClientRect();
+    const margin = 28;
+    if (rect.left < bounds.left + margin)
+      rail.scrollLeft += rect.left - bounds.left - margin;
+    else if (rect.right > bounds.right - margin)
+      rail.scrollLeft += rect.right - bounds.right + margin;
+  }
+
+  function focusTile(tile, row) {
+    if (!focusOnly(tile)) return false;
+    revealHorizontally(tile);
+    showRow(row);
+    desiredX = centerX(tile);
+    return true;
+  }
+
+  function closestColumn(row, x) {
+    const rail = row.querySelector(".rail");
+    if (!rail) return null;
+    const bounds = rail.getBoundingClientRect();
+    const items = tiles(rail).filter(isVisible);
+    if (!items.length) return null;
+    let best = null;
+    let bestDistance = Infinity;
+    for (const item of items) {
+      const midpoint = centerX(item);
+      // Prefer posters inside the visible horizontal strip, not offscreen.
+      const distance = Math.abs(midpoint - x) +
+        (midpoint < bounds.left || midpoint > bounds.right ? 10000 : 0);
+      if (distance < bestDistance) {
+        best = item;
+        bestDistance = distance;
+      }
+    }
+    return best;
+  }
+
+  function openRow(row, x) {
+    cancelPending();
+    const request = navigationId;
+    const index = Number(row.dataset.row);
+    // Directly start loading: the next shelf may be outside the lazy-load area.
+    if (window.REDVUE_TV_DATA && window.REDVUE_TV_DATA.loadRow)
+      window.REDVUE_TV_DATA.loadRow(index);
+
+    const tryFocus = () => {
+      if (request !== navigationId) return false;
+      const tile = closestColumn(row, x);
+      return tile ? focusTile(tile, row) : false;
+    };
+
+    if (tryFocus()) return;
+
+    // Show the new row's loading skeleton and give focus to its heading.
+    // Subsequent Up/Down inputs can now continue to adjacent rows.
+    const heading = row.querySelector("h2");
+    if (heading) {
+      heading.tabIndex = -1;
+      focusOnly(heading);
+    }
+    showRow(row);
     const rail = row.querySelector(".rail");
     if (!rail) return;
-    const observer = new MutationObserver(() => {
-      const next = cards(rail)[0];
-      if (next) { observer.disconnect(); focus(next); }
+    observer = new MutationObserver(() => {
+      if (tryFocus()) cancelPending();
     });
     observer.observe(rail, { childList: true });
-    setTimeout(() => observer.disconnect(), 8000);
+    timeout = setTimeout(() => {
+      if (request === navigationId) cancelPending();
+    }, 10000);
   }
 
-  function isDialogOpen() {
+  function firstRow() {
+    const row = rows()[0];
+    if (row) openRow(row, window.innerWidth * 0.17);
+  }
+
+  function currentDialog() {
     return one(".overlay:not(.hidden)");
   }
-  function moveInSearch(key) {
-    const overlay = one("#search-overlay");
-    const results = cards(overlay);
-    const current = document.activeElement;
-    if (key === "Enter") {
-      if (current && typeof current.click === "function") current.click();
-      return;
-    }
+
+  function searchKey(name) {
+    const dialog = one("#search-overlay");
     const input = one("#search-input");
-    if (current === input) {
-      if (key === "ArrowDown" && results.length) focus(results[0]);
-      else if (key === "ArrowUp") focus(overlay.querySelector("[data-close]"));
-      return;
-    }
-    if (current.matches(".close") && key === "ArrowDown") { focus(input); return; }
-    if (!current.classList.contains("tile")) { focus(input); return; }
-    const index = results.indexOf(current);
-    if (index < 0) { focus(input); return; }
-    if (key === "ArrowUp" && index < 6) { focus(input); return; }
-    const columnCount = Math.max(1, Math.round(overlay.querySelector(".results").clientWidth / (current.getBoundingClientRect().width + 14)));
-    const delta = key === "ArrowLeft" ? -1 : key === "ArrowRight" ? 1 : key === "ArrowDown" ? columnCount : -columnCount;
-    focus(results[Math.max(0, Math.min(results.length - 1, index + delta))]);
-  }
-  function moveInDetails(key) {
-    const close = one(".detail-close");
-    const launch = one("#detail-launch");
-    if (key === "Enter") {
-      const active = document.activeElement;
+    const close = dialog.querySelector("[data-close]");
+    const results = tiles(dialog);
+    const active = document.activeElement;
+    if (name === "Enter") {
       if (active && typeof active.click === "function") active.click();
       return;
     }
-    if (key === "ArrowDown" || key === "ArrowRight")
-      focus(launch && launch.getAttribute("href") ? launch : close);
-    else focus(close);
-  }
-  function key(name) {
-    const dialog = isDialogOpen();
-    if (dialog) {
-      if (dialog.id === "details-overlay") moveInDetails(name);
-      else moveInSearch(name);
-      return "handled";
+    if (active === input) {
+      if (name === "ArrowDown" && results.length) focusOnly(results[0]);
+      else if (name === "ArrowUp") focusOnly(close);
+      return;
     }
+    if (active === close) {
+      if (name === "ArrowDown") focusOnly(input);
+      return;
+    }
+    if (!active || !active.classList.contains("tile")) {
+      focusOnly(input);
+      return;
+    }
+    const position = results.indexOf(active);
+    if (position < 0) return;
+    const resultBox = dialog.querySelector(".results");
+    const itemWidth = active.getBoundingClientRect().width + 14;
+    const columns = Math.max(1, Math.floor((resultBox.clientWidth + 14) / itemWidth));
+    if (name === "ArrowUp" && position < columns) {
+      focusOnly(input);
+      return;
+    }
+    const delta = name === "ArrowLeft" ? -1 : name === "ArrowRight" ? 1 :
+      name === "ArrowDown" ? columns : -columns;
+    const next = results[Math.max(0, Math.min(results.length - 1, position + delta))];
+    if (focusOnly(next)) next.scrollIntoView({ block: "nearest", inline: "nearest" });
+  }
+
+  function detailKey(name) {
+    const close = one(".detail-close");
+    const launch = one("#detail-launch");
     const active = document.activeElement;
     if (name === "Enter") {
-      if (active && typeof active.click === "function" && active !== document.body)
+      if (active && typeof active.click === "function") active.click();
+    } else if (name === "ArrowDown" || name === "ArrowRight") {
+      focusOnly(launch && launch.getAttribute("href") ? launch : close);
+    } else focusOnly(close);
+  }
+
+  function topControls() {
+    // Navigation, hero and search remain reachable from a TV remote.
+    return [
+      ...document.querySelectorAll(".nav-btn"),
+      one("#search-open"),
+      one("#hero-detail"),
+      one("#hero-explore")
+    ].filter(isVisible);
+  }
+
+  function key(name) {
+    if (!["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Enter"].includes(name))
+      return "handled";
+
+    const dialog = currentDialog();
+    if (dialog) {
+      if (dialog.id === "details-overlay") detailKey(name);
+      else searchKey(name);
+      return "handled";
+    }
+
+    const active = document.activeElement;
+    if (name === "Enter") {
+      cancelPending();
+      if (active && active !== document.body && typeof active.click === "function")
         active.click();
-      else focus(one("#hero-detail"));
+      else focusOnly(one("#hero-detail"));
       return "handled";
     }
-    // Existing REDVUE app.js handles focus + scrolling between rows.
-    if (active && active.classList.contains("tile") && active.closest(".shelf")) {
-      document.dispatchEvent(new KeyboardEvent("keydown", { key: name, bubbles: true, cancelable: true }));
+
+    const currentRow = active && active.closest && active.closest(".shelf");
+    if (currentRow && !currentRow.classList.contains("hidden-by-filter")) {
+      if (active.classList.contains("tile") &&
+          (name === "ArrowLeft" || name === "ArrowRight")) {
+        cancelPending();
+        // Preserve the working horizontal navigation and lazy pagination.
+        document.dispatchEvent(new KeyboardEvent("keydown", {
+          key: name, bubbles: true, cancelable: true
+        }));
+        if (document.activeElement && document.activeElement.classList.contains("tile"))
+          desiredX = centerX(document.activeElement);
+        return "handled";
+      }
+      if (name === "ArrowLeft" || name === "ArrowRight") return "handled";
+      const shelves = rows();
+      const nextIndex = shelves.indexOf(currentRow) +
+        (name === "ArrowDown" ? 1 : -1);
+      if (active.classList.contains("tile")) desiredX = centerX(active);
+      if (nextIndex < 0) {
+        cancelPending();
+        focusOnly(one("#hero-detail"));
+        window.scrollTo({ top: 0, behavior: "auto" });
+      } else if (nextIndex < shelves.length) {
+        openRow(shelves[nextIndex], desiredX);
+      }
       return "handled";
     }
-    const top = [one(".nav-btn.active"), one("#hero-detail"), one("#hero-explore"), one("#search-open")].filter(shown);
-    let index = top.indexOf(active);
-    if (name === "ArrowDown") { focusFirstRow(); return "handled"; }
-    if (name === "ArrowUp") { focus(top[0]); return "handled"; }
-    if (index < 0) index = 1;
-    if (name === "ArrowLeft") focus(top[Math.max(0, index - 1)]);
-    if (name === "ArrowRight") focus(top[Math.min(top.length - 1, index + 1)]);
+
+    const controls = topControls();
+    if (name === "ArrowDown") {
+      firstRow();
+      return "handled";
+    }
+    if (name === "ArrowUp") {
+      focusOnly(one(".nav-btn.active") || controls[0]);
+      window.scrollTo({ top: 0, behavior: "auto" });
+      return "handled";
+    }
+    const current = controls.indexOf(active);
+    const index = current === -1 ? 0 : current;
+    focusOnly(controls[Math.max(0, Math.min(controls.length - 1,
+      index + (name === "ArrowRight" ? 1 : -1)))]);
     return "handled";
   }
+
   function back() {
-    const dialog = isDialogOpen();
+    cancelPending();
+    const dialog = currentDialog();
     if (dialog) {
       const close = dialog.querySelector("[data-close]");
       if (close) close.click();
       return "handled";
     }
     const active = document.activeElement;
-    if (active && active.closest(".shelf")) {
-      focus(one("#hero-detail"));
-      window.scrollTo({ top: 0, behavior: "smooth" });
+    if (active && active.closest && active.closest(".shelf")) {
+      focusOnly(one("#hero-detail"));
+      window.scrollTo({ top: 0, behavior: "auto" });
       return "handled";
     }
     return "exit";
   }
+
   function initialise() {
     document.body.classList.add("tv-mode");
-    if (!shown(document.activeElement) || document.activeElement === document.body)
-      focus(one("#hero-detail"));
+    // Avoid queued browser smooth-scroll animations fighting D-pad movement.
+    document.documentElement.style.scrollBehavior = "auto";
+    if (!document.activeElement || document.activeElement === document.body)
+      focusOnly(one("#hero-detail"));
   }
+
   window.REDVUE_TV_REMOTE = { initialise, key, back };
-  document.addEventListener("DOMContentLoaded", initialise, { once: true });
+  if (document.readyState === "loading")
+    document.addEventListener("DOMContentLoaded", initialise, { once: true });
+  else initialise();
 })();
