@@ -32,6 +32,93 @@
   let observer = null;
   let timeout = 0;
   let navigationId = 0;
+  let scrollFrame = 0;
+  let selectedPosition = null;
+  const RETURN_KEY = "redvue-tv-return-v1";
+  let restoring = false;
+
+  function stopScroll() {
+    if (scrollFrame) cancelAnimationFrame(scrollFrame);
+    scrollFrame = 0;
+  }
+
+  // Each D-pad press takes over the animation instead of stacking jumps.
+  function glideTo(target) {
+    stopScroll();
+    const start = window.scrollY;
+    const end = Math.max(0, target);
+    const distance = end - start;
+    if (Math.abs(distance) < 4) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      window.scrollTo(0, end);
+      return;
+    }
+    const duration = Math.min(210, Math.max(125, Math.abs(distance) * 0.35));
+    let began = 0;
+    const step = now => {
+      if (!began) began = now;
+      const t = Math.min(1, (now - began) / duration);
+      const eased = 1 - Math.pow(1 - t, 3);
+      window.scrollTo(0, start + distance * eased);
+      scrollFrame = t < 1 ? requestAnimationFrame(step) : 0;
+    };
+    scrollFrame = requestAnimationFrame(step);
+  }
+
+  function remember(tile) {
+    const shelf = tile && tile.closest(".shelf");
+    if (!shelf) return;
+    selectedPosition = {
+      row: Number(shelf.dataset.row),
+      id: tile.dataset.id || "",
+      scrollY: window.scrollY,
+      time: Date.now()
+    };
+  }
+
+  function saveReturnPoint() {
+    // Local-only browsing state, not a TMDB token or Stremio credential.
+    if (!selectedPosition) return;
+    try {
+      localStorage.setItem(RETURN_KEY, JSON.stringify({
+        ...selectedPosition, scrollY: window.scrollY, time: Date.now()
+      }));
+    } catch (error) { console.debug("REDVUE could not persist browsing position", error); }
+  }
+
+  function restoreReturnPoint() {
+    if (restoring) return;
+    let position = selectedPosition;
+    try {
+      const stored = JSON.parse(localStorage.getItem(RETURN_KEY) || "null");
+      if (stored && Number.isInteger(stored.row) &&
+          stored.time > Date.now() - 86400000) position = stored;
+    } catch (error) { /* Storage may be disabled on some devices. */ }
+    if (!position) return;
+    const row = document.querySelector('.shelf[data-row="' + position.row + '"]');
+    if (!row || row.classList.contains("hidden-by-filter")) return;
+    restoring = true;
+    cancelPending();
+    if (window.REDVUE_TV_DATA?.loadRow)
+      window.REDVUE_TV_DATA.loadRow(position.row);
+    const rail = row.querySelector(".rail");
+    const finish = () => {
+      let tile = Array.from(rail.querySelectorAll(".tile"))
+        .find(t => t.dataset.id === position.id);
+      if (!tile) tile = rail.querySelector(".tile");
+      if (!tile) return false;
+      // Restore the selected poster, not the top of the homepage.
+      focusTile(tile, row);
+      restoring = false;
+      return true;
+    };
+    if (finish()) return;
+    const observer = new MutationObserver(() => {
+      if (finish()) observer.disconnect();
+    });
+    observer.observe(rail, { childList: true });
+    setTimeout(() => { observer.disconnect(); restoring = false; }, 8000);
+  }
 
   function cancelPending() {
     navigationId += 1;
@@ -49,9 +136,7 @@
     let adjustment = 0;
     if (rect.top < topLimit) adjustment = rect.top - topLimit;
     else if (rect.bottom > bottomLimit) adjustment = rect.bottom - bottomLimit;
-    if (Math.abs(adjustment) > 3) {
-      window.scrollTo({ top: Math.max(0, window.scrollY + adjustment), behavior: "auto" });
-    }
+    if (Math.abs(adjustment) > 3) glideTo(window.scrollY + adjustment);
   }
 
   function revealHorizontally(tile) {
@@ -71,6 +156,7 @@
     revealHorizontally(tile);
     showRow(row);
     desiredX = centerX(tile);
+    remember(tile);
     return true;
   }
 
@@ -100,8 +186,12 @@
     const request = navigationId;
     const index = Number(row.dataset.row);
     // Directly start loading: the next shelf may be outside the lazy-load area.
-    if (window.REDVUE_TV_DATA && window.REDVUE_TV_DATA.loadRow)
+    if (window.REDVUE_TV_DATA && window.REDVUE_TV_DATA.loadRow) {
       window.REDVUE_TV_DATA.loadRow(index);
+      // Load only the next visible shelf ahead to reduce waiting on navigation.
+      const sibling = rows()[rows().indexOf(row) + 1];
+      if (sibling) window.REDVUE_TV_DATA.loadRow(Number(sibling.dataset.row));
+    }
 
     const tryFocus = () => {
       if (request !== navigationId) return false;
@@ -227,8 +317,10 @@
         document.dispatchEvent(new KeyboardEvent("keydown", {
           key: name, bubbles: true, cancelable: true
         }));
-        if (document.activeElement && document.activeElement.classList.contains("tile"))
+        if (document.activeElement && document.activeElement.classList.contains("tile")) {
           desiredX = centerX(document.activeElement);
+          remember(document.activeElement);
+        }
         return "handled";
       }
       if (name === "ArrowLeft" || name === "ArrowRight") return "handled";
@@ -239,7 +331,7 @@
       if (nextIndex < 0) {
         cancelPending();
         focusOnly(one("#hero-detail"));
-        window.scrollTo({ top: 0, behavior: "auto" });
+        glideTo(0);
       } else if (nextIndex < shelves.length) {
         openRow(shelves[nextIndex], desiredX);
       }
@@ -253,7 +345,7 @@
     }
     if (name === "ArrowUp") {
       focusOnly(one(".nav-btn.active") || controls[0]);
-      window.scrollTo({ top: 0, behavior: "auto" });
+      glideTo(0);
       return "handled";
     }
     const current = controls.indexOf(active);
@@ -274,7 +366,7 @@
     const active = document.activeElement;
     if (active && active.closest && active.closest(".shelf")) {
       focusOnly(one("#hero-detail"));
-      window.scrollTo({ top: 0, behavior: "auto" });
+      glideTo(0);
       return "handled";
     }
     return "exit";
@@ -282,13 +374,30 @@
 
   function initialise() {
     document.body.classList.add("tv-mode");
-    // Avoid queued browser smooth-scroll animations fighting D-pad movement.
     document.documentElement.style.scrollBehavior = "auto";
     if (!document.activeElement || document.activeElement === document.body)
       focusOnly(one("#hero-detail"));
+    restoreReturnPoint();
   }
 
-  window.REDVUE_TV_REMOTE = { initialise, key, back };
+  function suspend() {
+    saveReturnPoint();
+    stopScroll();
+  }
+
+  function resume() {
+    const dialog = currentDialog();
+    // An external playback session was launched. Return to the catalogue.
+    if (dialog?.id === "details-overlay") {
+      const close = dialog.querySelector("[data-close]");
+      if (close) close.click();
+    }
+    restoreReturnPoint();
+  }
+
+  window.REDVUE_TV_REMOTE = {
+    initialise, key, back, saveReturnPoint, suspend, resume
+  };
   if (document.readyState === "loading")
     document.addEventListener("DOMContentLoaded", initialise, { once: true });
   else initialise();
