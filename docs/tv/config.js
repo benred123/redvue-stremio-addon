@@ -1,4 +1,3 @@
-// REDVUE public configuration — NO API keys here!
-// Paste only the public workers.dev URL once your Cloudflare Worker is live.
-// Example: https://redvue-tmdb.your-subdomain.workers.dev
-window.REDVUE_TMDB_API = "";
+// REDVUE public configuration — no TMDB API keys are stored here.
+// Cloudflare Worker handles TMDB authentication via its private secret.
+window.REDVUE_TMDB_API = "https://redvue-tmdb.fateinput.workers.dev";
