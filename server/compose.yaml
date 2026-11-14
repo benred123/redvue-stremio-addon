@@ -1,11 +1,13 @@
 # REDVUE / ErsatzTV Legacy - Beelink Linux Docker setup
 # Use this on the Beelink AFTER Ubuntu Server and Docker are installed.
+# Pinned to the official stable ErsatzTV Legacy v26.12.0 (2026-11-06)
+# to avoid unexpected new releases breaking our setup.
 # Run from /srv/redvue using: docker compose up -d
 #
 # IMPORTANT: This is for Linux, not Docker Desktop for Windows.
 services:
   ersatztv:
-    image: ghcr.io/ersatztv/legacy:latest
+    image: ghcr.io/ersatztv/legacy:v26.12.0
     container_name: redvue-ersatztv
     restart: unless-stopped
     environment:
