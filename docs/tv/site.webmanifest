@@ -1,0 +1,17 @@
+{
+  "name": "REDVUE — Everything worth watching",
+  "short_name": "REDVUE",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#09090b",
+  "theme_color": "#e50914",
+  "icons": [
+    {
+      "src": "../assets/redvue-mark.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

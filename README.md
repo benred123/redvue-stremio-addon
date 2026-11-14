@@ -1,29 +1,40 @@
-# REDVUE — Stremio catalog add-on
+# REDVUE — Stremio catalog add-on + TV-first browser
 
 **Everything worth watching.**
 
-Five curated movie and TV shelves (50 titles) in your existing Stremio interface. No playback streams supplied. Lists are hand-picked and not updated automatically.
+This repository contains two distinct projects:
 
-## Install on a Fire Stick / Android TV
+- **Stremio catalog add-on** (`docs/manifest.json`): five hand-picked collections, with Stremio-controlled interface.
+- **REDVUE TV browser** (`docs/tv/`): independently designed Netflix-style homepage, with 18 horizontally scrollable rows, live catalog discovery, search, details, keyboard/TV-remote arrow navigation, and a Stremio deep-link handoff.
 
-1. In this repository, go to **Settings > Pages**.
-2. Under **Build and deployment**, choose **Deploy from a branch**, **main**, **/docs**, and click **Save**.
-3. Once GitHub Pages is published, open: `https://benred123.github.io/redvue-stremio-addon/manifest.json`.
-4. In Stremio on your computer or at https://web.stremio.com, sign in to the **same account** as your TV, open **Add-ons**, and paste that complete manifest URL into the add-on installation field.
-5. Install REDVUE, then restart Stremio on the TV if the new rows have not appeared. Their positions depend on Stremio and existing add-ons.
+## Try the new TV interface
 
-You can also visit https://benred123.github.io/redvue-stremio-addon/ for a branded landing page.
+Visit **https://benred123.github.io/redvue-stremio-addon/tv/** using a computer or TV browser. On a keyboard use arrow keys to move between titles and rows, Enter to open details, Escape to close. On a Fire Stick you can try a TV browser such as Silk. Native remote and app launching must be tested on your actual device; not all TV browsers support the same navigation or external application links.
 
-## Change the titles
+**Important:** This web interface is not a Stremio add-on theme, and will not replace Stremio's native home screen. Playback availability still depends on Stremio and your installed sources. The app does not host, download or supply video streams.
 
-Edit `catalogs.js` using IMDb IDs and labels. With Node.js 18+ installed, run:
+The TV homepage uses the public **Cinemeta** catalog service for discovery data (including genre, ratings and pagination), so rows can show many more titles than our original 50. Cinemeta availability and cross-origin browser access are external dependencies; if a catalog is unavailable, the UI offers retry.
 
-```sh
-node build.js
-```
+## Add-on installation
 
-Commit the regenerated `docs/` files to publish changes. For local testing, run `node preview.js` and visit http://127.0.0.1:7107/manifest.json.
+1. Publish the `docs/` directory with GitHub Pages in **Settings > Pages > Deploy from a branch > main > /docs**.
+2. Install `https://benred123.github.io/redvue-stremio-addon/manifest.json` in Stremio using your usual account.
+3. Open Stremio on the TV with the same account to access its native catalog view.
 
-Note: GitHub Pages and this repository are public. Don't put API keys or personal information in the code.
+## Edit the add-on collections
 
-Built using Stremio's [add-on protocol](https://stremio.github.io/stremio-addon-sdk/protocol.html) and [static example](https://github.com/Stremio/stremio-static-addon-example).
+Change `catalogs.js`, then with Node.js installed run `node build.js`. Commit regenerated `docs/` contents.
+
+## TV browser code
+
+- `docs/tv/index.html`: accessible main UI and dialogs.
+- `docs/tv/styles.css`: Netflix-inspired REDVUE styling.
+- `docs/tv/app.js`: API requests, remote navigation, pagination, search, details and Stremio handoff.
+- `docs/tv/site.webmanifest`: installable web-app metadata for supporting browsers.
+
+> No API secrets, accounts, streams, DRM bypass, or server are required for this catalog browsing prototype. An actual native Android TV application is a separate future build and can be based on this UI.
+
+## References
+
+- [Stremio addon SDK](https://stremio.github.io/stremio-addon-sdk/)
+- [Stremio deep links](https://github.com/Stremio/stremio-addon-sdk/blob/master/docs/deep-links.md)

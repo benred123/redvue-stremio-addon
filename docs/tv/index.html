@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#09090b">
+  <meta name="description" content="REDVUE TV — a cinematic way to discover movies and series and open them in Stremio.">
+  <link rel="manifest" href="./site.webmanifest">
+  <link rel="icon" href="../assets/redvue-mark.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./styles.css">
+  <title>REDVUE — Everything worth watching</title>
+</head>
+<body>
+  <header class="header">
+    <a href="./" class="brand" aria-label="REDVUE Home"><span>RED</span>VUE</a>
+    <nav class="nav" aria-label="Browse">
+      <button class="nav-btn active" data-filter="all">Home</button>
+      <button class="nav-btn" data-filter="series">Series</button>
+      <button class="nav-btn" data-filter="movie">Films</button>
+    </nav>
+    <button id="search-open" class="search-launch" aria-label="Search titles">⌕ <span>Search</span></button>
+  </header>
+  <main id="app">
+    <section class="hero" id="hero">
+      <div id="hero-art" class="hero-art"></div>
+      <div class="hero-shade"></div>
+      <div class="hero-info">
+        <div class="eyebrow"><span class="red-dot"></span> REDVUE PICK</div>
+        <h1 id="hero-title">Your next favourite story.</h1>
+        <p id="hero-description">Discover thousands of movies and series, without jumping between filters.</p>
+        <div class="hero-actions">
+          <button class="primary" id="hero-detail">Explore REDVUE</button>
+          <button class="secondary" id="hero-explore">Browse collections ↓</button>
+        </div>
+      </div>
+    </section>
+    <section id="shelves" aria-label="Movie and series collections"></section>
+    <footer class="footer">
+      <span class="brand-foot">REDVUE</span>
+      <span>Movie discovery powered by Stremio's Cinemeta catalog. Playback opens in Stremio. REDVUE doesn't host streams.</span>
+    </footer>
+  </main>
+  <div id="search-overlay" class="overlay hidden" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Search">
+    <div class="panel search-panel">
+      <div class="modal-head"><h2>Search REDVUE</h2><button class="close" data-close aria-label="Close search">✕</button></div>
+      <input id="search-input" type="search" placeholder="Search movies and series…" autocomplete="off" spellcheck="false">
+      <div id="search-status" class="muted">Search thousands of titles.</div>
+      <div id="search-results" class="results"></div>
+    </div>
+  </div>
+  <div id="details-overlay" class="overlay hidden" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Movie details">
+    <div class="panel detail-panel">
+      <button class="close detail-close" data-close aria-label="Close details">✕</button>
+      <div id="detail-hero" class="detail-art"></div>
+      <div class="detail-copy">
+        <div class="eyebrow"><span class="red-dot"></span> REDVUE</div>
+        <h2 id="detail-title"></h2>
+        <div id="detail-facts" class="detail-facts"></div>
+        <p id="detail-description"></p>
+        <a id="detail-launch" class="primary launch" href="#" role="button">▶ Open in Stremio</a>
+        <p class="muted small">Opening the installed Stremio app depends on your TV browser. If it does not open, use the same title in Stremio directly.</p>
+      </div>
+    </div>
+  </div>
+  <script src="./app.js" defer></script>
+</body>
+</html>
