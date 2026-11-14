@@ -7,6 +7,38 @@ This repository contains two distinct projects:
 - **Stremio catalog add-on** (`docs/manifest.json`): five hand-picked collections, with Stremio-controlled interface.
 - **REDVUE TV browser** (`docs/tv/`): independently designed Netflix-style homepage, with 30 horizontally scrollable TMDB rows when configured (18 fallback Cinemeta rows), live catalog discovery, search, details, keyboard/TV-remote arrow navigation, and a Stremio deep-link handoff.
 
+## REDVUE for Fire TV — APK beta
+
+A Fire TV / Android TV launcher app is included in `android-tv/`. This **beta**
+is a real Android application with fullscreen WebView rendering of the existing
+REDVUE UI; D-pad navigation is handled by Android key events and `docs/tv/remote.js`.
+It is *not yet* a rewritten native Android TV interface.
+
+Features:
+- Fire TV/Android TV launcher entry, fullscreen navigation without Silk cursor.
+- Left/right moves along poster rows; up/down moves through shelves.
+- Select opens details; Back closes details or returns to the top.
+- Stremio deep links open the installed Stremio app when supported.
+- Uses the existing Cloudflare TMDB gateway; no API token in the APK.
+- Website updates automatically update the in-app REDVUE content.
+
+### Build and install a test APK
+
+GitHub Actions builds an unsigned-for-release **debug APK**, automatically
+signed with a standard Android debug key. Open the repository **Actions** tab,
+select **REDVUE Android TV APK**, select the most recent successful run and
+download the **REDVUE-FireTV-debug-APK** artifact. Extract the ZIP to get
+`app-debug.apk`.
+
+For a Fire Stick, you can sideload the APK using a trusted local install method
+or ADB with Developer Options / ADB Debugging enabled if supported. Only install
+your own GitHub Actions artifact. The app targets Android 6.0+ in this beta.
+Stremio must already be installed and configured.
+
+**Test checklist:** D-pad focus, scroll between rows, detail modal,
+Search keyboard support, open-in-Stremio link, Back returning to REDVUE.
+This build hasn't been tested on the user's Fire TV yet.
+
 ## TMDB-powered catalog (new)
 
 The TV homepage now supports **30 live TMDB shelves**, cinematic backdrops, full-text movie/TV search, paginated browsing and IMDb-ID resolution for Stremio handoff. Cinemeta remains the fallback until the secure TMDB gateway is configured.
