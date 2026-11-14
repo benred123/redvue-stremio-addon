@@ -111,3 +111,14 @@ body.tv-mode #details-overlay .return-hint {
   body.tv-mode #details-overlay #detail-description { -webkit-line-clamp: 2; line-clamp: 2; }
   body.tv-mode #details-overlay .return-hint { display:none; }
 }
+
+/* New REDVUE monogram + wordmark. */
+.brand { display:flex; align-items:center; gap:8px; }
+.brand .brand-glyph { display:block; width:59px; height:37px; object-fit:contain; flex:none; }
+.brand .brand-word { color:#fff; }
+.brand .brand-word > span { color:#e50914; }
+body.tv-mode .brand .brand-glyph { width:68px; height:41px; }
+@media (max-width:720px) {
+  .brand { gap:5px; }
+  .brand .brand-glyph { width:38px; height:26px; }
+}
